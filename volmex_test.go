@@ -22,8 +22,8 @@ const (
 	capabilitiesPath = "/VolumeDriver.Capabilities"
 )
 
-func TestEmpty(t *testing.T) {
-	d := &VolmexDriver{}
+func TestOrdered(t *testing.T) {
+	d := New()
 	h := volume.NewHandler(d)
 
 	l := sockets.NewInmemSocket("test", 0)
@@ -39,8 +39,61 @@ func TestEmpty(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if resp.Err != "" {
+		t.Fatal(resp.Err)
+	}
+
+	// Get
+	resp, err = driverRequest(client, getPath, volume.Request{Name: "foo"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.Err != "" {
+		t.Fatal(resp.Err)
+	}
+	if resp.Volume.Mountpoint != "apath" {
+		t.Fatalf("Mountpoint was wrong %v", resp.Volume.Mountpoint)
+	}
+
+	// List
+	resp, err = driverRequest(client, listPath, volume.Request{Name: "foo"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.Err != "" {
+		t.Fatal(resp.Err)
+	}
+	if resp.Volumes[0].Name != "foo" {
+		t.Fatalf("List did not contain volume %v", resp.Volumes)
+	}
+
+	// Path
+	resp, err = driverRequest(client, hostVirtualPath, volume.Request{Name: "foo"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.Err != "" {
+		t.Fatal(resp.Err)
+	}
+	if resp.Mountpoint != "apath" {
+		t.Fatalf("Mountpoint was %v", resp.Mountpoint)
+	}
+
+	// Remove + Get
+	resp, err = driverRequest(client, removePath, volume.Request{Name: "foo"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.Err != "" {
+		t.Fatal(resp.Err)
+	}
+	// Get
+	resp, err = driverRequest(client, getPath, volume.Request{Name: "foo"})
+	if err != nil {
+		t.Fatal(err)
+	}
 	if resp.Err == "" {
-		t.Fatal("Did not throw an error")
+		t.Fatal("volume not deleted")
 	}
 }
 
