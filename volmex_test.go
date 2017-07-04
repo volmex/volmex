@@ -38,8 +38,17 @@ func TestOrdered(t *testing.T) {
 		Dial: l.Dial,
 	}}
 
-	// Create
+	// Create missing command
 	resp, err := driverRequest(client, createPath, volume.Request{Name: "foo"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.Err == "" {
+		t.Fatal("create without cmd worked")
+	}
+
+	// Create
+	resp, err = driverRequest(client, createPath, volume.Request{Name: "foo", Options: map[string]string{"cmd": "foo"}})
 	if err != nil {
 		t.Fatal(err)
 	}

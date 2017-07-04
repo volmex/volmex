@@ -1,7 +1,6 @@
 package volmex
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/docker/go-plugins-helpers/volume"
@@ -26,6 +25,13 @@ func NewDriver(storage Storage, mountSource string) *Driver {
 
 func (d *Driver) Create(req volume.Request) volume.Response {
 	fmt.Printf("Create with %v\n", req)
+
+	if req.Options["cmd"] == "" {
+		return volume.Response{
+			Err: "no mount command. Specify with -o cmd=acommand",
+		}
+	}
+
 	v := &Volume{
 		Volume: volume.Volume{
 			Name:       req.Name,
@@ -94,12 +100,6 @@ func (d *Driver) Mount(req volume.MountRequest) volume.Response {
 		}
 	}
 
-	if v.Options["cmd"] == "" {
-		return volume.Response{
-			Err: "no mount command. Specify with -o cmd=acommand",
-		}
-	}
-
 	fmt.Println(v.Options["cmd"])
 
 	return volume.Response{}
@@ -113,13 +113,4 @@ func (d *Driver) Unmount(req volume.UnmountRequest) volume.Response {
 func (d *Driver) Capabilities(req volume.Request) volume.Response {
 	fmt.Printf("Capabilities with %v\n", req)
 	return volume.Response{}
-}
-
-func volumeByName(volumes []*volume.Volume, name string) (*volume.Volume, error) {
-	for _, v := range volumes {
-		if v.Name == name {
-			return v, nil
-		}
-	}
-	return nil, errors.New("no volume found")
 }
