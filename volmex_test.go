@@ -23,7 +23,7 @@ const (
 )
 
 func TestOrdered(t *testing.T) {
-	d := New()
+	d := New("/data")
 	h := volume.NewHandler(d)
 
 	l := sockets.NewInmemSocket("test", 0)
@@ -51,7 +51,7 @@ func TestOrdered(t *testing.T) {
 	if resp.Err != "" {
 		t.Fatal(resp.Err)
 	}
-	if resp.Volume.Mountpoint != "apath" {
+	if resp.Volume.Mountpoint != "/data/foo" {
 		t.Fatalf("Mountpoint was wrong %v", resp.Volume.Mountpoint)
 	}
 
@@ -75,7 +75,7 @@ func TestOrdered(t *testing.T) {
 	if resp.Err != "" {
 		t.Fatal(resp.Err)
 	}
-	if resp.Mountpoint != "apath" {
+	if resp.Mountpoint != "/data/foo" {
 		t.Fatalf("Mountpoint was %v", resp.Mountpoint)
 	}
 

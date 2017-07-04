@@ -8,20 +8,22 @@ import (
 )
 
 type VolmexDriver struct {
-	volumes []*volume.Volume
+	volumes     []*volume.Volume
+	mountSource string
 }
 
-func New() *VolmexDriver {
-	return &VolmexDriver{}
+func New(mountSource string) *VolmexDriver {
+	return &VolmexDriver{
+		mountSource: mountSource,
+	}
 }
 
 func (d *VolmexDriver) Create(req volume.Request) volume.Response {
 	fmt.Printf("Create with %v\n", req)
 	d.volumes = append(d.volumes,
 		&volume.Volume{
-			Name: req.Name,
-			// TODO: select mountpoint
-			Mountpoint: "apath",
+			Name:       req.Name,
+			Mountpoint: d.mountSource + "/" + req.Name,
 		})
 	return volume.Response{}
 }
