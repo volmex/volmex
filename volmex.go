@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	"github.com/docker/go-plugins-helpers/volume"
+	"os/exec"
+	"strings"
 )
 
 type Volume struct {
@@ -100,7 +102,19 @@ func (d *Driver) Mount(req volume.MountRequest) volume.Response {
 		}
 	}
 
-	fmt.Println(v.Options["cmd"])
+	fmt.Println("executing " + v.Options["cmd"])
+	components := strings.Split(v.Options["cmd"], " ")
+	cmd := exec.Command(components[0], components[1:]...)
+	cmd.Env = []string{"MOUNT_SOURCE=" + v.Mountpoint}
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return volume.Response{
+			Err: err.Error(),
+		}
+	}
+
+	fmt.Println(string(out))
+
 
 	return volume.Response{
 		Mountpoint: v.Mountpoint,
