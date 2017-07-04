@@ -11,7 +11,8 @@ func main() {
 	mountSource := flag.String("mountsource", "/var/local/volmex", "The base directory for the mounts")
 	flag.Parse()
 
-	d := volmex.New(*mountSource)
+	storage := volmex.NewInMemoryStorage()
+	d := volmex.NewDriver(storage, *mountSource)
 	h := volume.NewHandler(d)
 	err := h.ServeUnix("volmex", 0)
 	if err != nil {

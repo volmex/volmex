@@ -17,6 +17,13 @@ type Driver struct {
 	mountSource string
 }
 
+func NewDriver(storage Storage, mountSource string) *Driver {
+	return &Driver{
+		storage:     storage,
+		mountSource: mountSource,
+	}
+}
+
 func (d *Driver) Create(req volume.Request) volume.Response {
 	fmt.Printf("Create with %v\n", req)
 	v := &Volume{
@@ -92,6 +99,9 @@ func (d *Driver) Mount(req volume.MountRequest) volume.Response {
 			Err: "no mount command. Specify with -o cmd=acommand",
 		}
 	}
+
+	fmt.Println(v.Options["cmd"])
+
 	return volume.Response{}
 }
 
