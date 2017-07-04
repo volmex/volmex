@@ -102,7 +102,9 @@ func (d *Driver) Mount(req volume.MountRequest) volume.Response {
 
 	fmt.Println(v.Options["cmd"])
 
-	return volume.Response{}
+	return volume.Response{
+		Mountpoint: v.Mountpoint,
+	}
 }
 
 func (d *Driver) Unmount(req volume.UnmountRequest) volume.Response {
