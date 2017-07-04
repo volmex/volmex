@@ -23,7 +23,11 @@ const (
 )
 
 func TestOrdered(t *testing.T) {
-	d := New("/data")
+	storage := NewInMemoryStorage()
+	d := &Driver{
+		storage:     storage,
+		mountSource: "/data",
+	}
 	h := volume.NewHandler(d)
 
 	l := sockets.NewInmemSocket("test", 0)

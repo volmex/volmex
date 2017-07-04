@@ -7,31 +7,75 @@ import (
 	"github.com/docker/go-plugins-helpers/volume"
 )
 
-type VolmexDriver struct {
-	volumes     []*volume.Volume
+type Storage interface {
+	Get(name string) (*Volume, error)
+	Put(name string, volume *Volume) error
+	Remove(name string) error
+	List() []*Volume
+}
+
+type InMemoryStorage struct {
+	data map[string]*Volume
+}
+
+func NewInMemoryStorage() *InMemoryStorage {
+	return &InMemoryStorage{
+		data: make(map[string]*Volume, 0),
+	}
+}
+
+func (s *InMemoryStorage) Get(name string) (*Volume, error) {
+	v := s.data[name]
+	if v == nil {
+		return nil, errors.New("no volume found")
+	}
+	return v, nil
+}
+
+func (s *InMemoryStorage) Put(name string, volume *Volume) error {
+	s.data[name] = volume
+	return nil
+}
+
+func (s *InMemoryStorage) Remove(name string) error {
+	delete(s.data, name)
+	return nil
+}
+
+func (s *InMemoryStorage) List() (vs []*Volume) {
+	for _, v := range s.data {
+		vs = append(vs, v)
+	}
+	return vs
+}
+
+type Volume struct {
+	volume.Volume
+	Options map[string]string
+}
+
+type Driver struct {
+	storage     Storage
 	mountSource string
 }
 
-func New(mountSource string) *VolmexDriver {
-	return &VolmexDriver{
-		mountSource: mountSource,
-	}
-}
-
-func (d *VolmexDriver) Create(req volume.Request) volume.Response {
+func (d *Driver) Create(req volume.Request) volume.Response {
 	fmt.Printf("Create with %v\n", req)
-	d.volumes = append(d.volumes,
-		&volume.Volume{
+	v := &Volume{
+		Volume: volume.Volume{
 			Name:       req.Name,
 			Mountpoint: d.mountSource + "/" + req.Name,
-		})
+		},
+		Options: req.Options,
+	}
+	d.storage.Put(v.Name, v)
 	return volume.Response{}
 }
 
-func (d *VolmexDriver) Get(req volume.Request) volume.Response {
+func (d *Driver) Get(req volume.Request) volume.Response {
 	fmt.Printf("Get with %v", req)
 
-	v, err := volumeByName(d.volumes, req.Name)
+	v, err := d.storage.Get(req.Name)
 	if err != nil {
 		return volume.Response{
 			Err: err.Error(),
@@ -39,35 +83,34 @@ func (d *VolmexDriver) Get(req volume.Request) volume.Response {
 	}
 
 	return volume.Response{
-		Volume: v,
+		Volume: &v.Volume,
 	}
 }
 
-func (d *VolmexDriver) List(req volume.Request) volume.Response {
+func (d *Driver) List(req volume.Request) volume.Response {
 	fmt.Printf("List with %v\n", req)
+	var vs []*volume.Volume
+	for _, v := range d.storage.List() {
+		vs = append(vs, &v.Volume)
+	}
 	return volume.Response{
-		Volumes: d.volumes,
+		Volumes: vs,
 	}
 }
 
-func (d *VolmexDriver) Remove(req volume.Request) volume.Response {
+func (d *Driver) Remove(req volume.Request) volume.Response {
 	fmt.Printf("Remove with %v\n", req)
-	for i := range d.volumes {
-		if d.volumes[i].Name == req.Name {
-			d.volumes = append(d.volumes[:i], d.volumes[i+1:]...)
-			return volume.Response{}
-		}
-	}
+	d.storage.Remove(req.Name)
 	return volume.Response{}
 }
 
-func (d *VolmexDriver) Path(req volume.Request) volume.Response {
+func (d *Driver) Path(req volume.Request) volume.Response {
 	fmt.Printf("Path with %v\n", req)
 
-	v, err := volumeByName(d.volumes, req.Name)
+	v, err := d.storage.Get(req.Name)
 	if err != nil {
 		return volume.Response{
-			Err: err.Error(),
+			Err: "no volume found",
 		}
 	}
 
@@ -76,17 +119,30 @@ func (d *VolmexDriver) Path(req volume.Request) volume.Response {
 	}
 }
 
-func (d *VolmexDriver) Mount(req volume.MountRequest) volume.Response {
+func (d *Driver) Mount(req volume.MountRequest) volume.Response {
 	fmt.Printf("Mount with %v\n", req)
-	return volume.Response{Err: "no such volume"}
+
+	v, err := d.storage.Get(req.Name)
+	if err != nil {
+		return volume.Response{
+			Err: "no volume found",
+		}
+	}
+
+	if v.Options["cmd"] == "" {
+		return volume.Response{
+			Err: "no mount command. Specify with -o cmd=acommand",
+		}
+	}
+	return volume.Response{}
 }
 
-func (d *VolmexDriver) Unmount(req volume.UnmountRequest) volume.Response {
+func (d *Driver) Unmount(req volume.UnmountRequest) volume.Response {
 	fmt.Printf("Unmount with %v\n", req)
 	return volume.Response{Err: "no such volume"}
 }
 
-func (d *VolmexDriver) Capabilities(req volume.Request) volume.Response {
+func (d *Driver) Capabilities(req volume.Request) volume.Response {
 	fmt.Printf("Capabilities with %v\n", req)
 	return volume.Response{}
 }
