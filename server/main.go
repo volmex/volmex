@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	mountSource := flag.String("config", "/var/local/volmex", "Base for config directories")
+	mountSource := flag.String("storage", "/var/local/volmex", "Base for storage directories")
 	flag.Parse()
 
 	config := volmex.NewFileVolConfig(*mountSource + "/volumes.json")
