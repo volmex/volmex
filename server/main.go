@@ -4,7 +4,7 @@ import (
 	"flag"
 
 	"github.com/docker/go-plugins-helpers/volume"
-	"gitlab.mi.hdm-stuttgart.de/fankhauser/volmex"
+	"github.com/volmex/volmex"
 )
 
 func main() {

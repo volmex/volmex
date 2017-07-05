@@ -115,7 +115,6 @@ func (d *Driver) Mount(req volume.MountRequest) volume.Response {
 
 	fmt.Println(string(out))
 
-
 	return volume.Response{
 		Mountpoint: v.Mountpoint,
 	}

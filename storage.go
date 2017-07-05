@@ -1,8 +1,8 @@
 package volmex
 
 import (
-	"errors"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 )
 
@@ -50,13 +50,13 @@ func (s *InMemoryStorage) List() (vs []*Volume) {
 
 type FileStorage struct {
 	inMemoryStorage *InMemoryStorage
-	filename string
+	filename        string
 }
 
 func NewFileStorage(filename string) *FileStorage {
 	return &FileStorage{
 		inMemoryStorage: NewInMemoryStorage(),
-		filename: filename,
+		filename:        filename,
 	}
 }
 
@@ -102,4 +102,3 @@ func (s *FileStorage) Load() error {
 	s.inMemoryStorage = &m
 	return nil
 }
-

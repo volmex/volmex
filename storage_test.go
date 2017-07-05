@@ -1,8 +1,8 @@
 package volmex
 
 import (
-	"testing"
 	"github.com/docker/go-plugins-helpers/volume"
+	"testing"
 )
 
 func TestFileStorage(t *testing.T) {
@@ -11,7 +11,7 @@ func TestFileStorage(t *testing.T) {
 	s.Put("foo", &Volume{
 		Volume: volume.Volume{
 			Name: "foo",
-	}})
+		}})
 
 	err := s.Save()
 
