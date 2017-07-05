@@ -10,8 +10,8 @@ func main() {
 	mountSource := flag.String("storage", "/var/local/volmex", "Base for storage directories")
 	flag.Parse()
 
-	config := volmex.NewFileVolConfig(*mountSource + "/volumes.json")
-	d := volmex.NewDriver(config, *mountSource)
+	state := volmex.NewFileState(*mountSource + "/volumes.json")
+	d := volmex.NewDriver(state, *mountSource)
 	h := volume.NewHandler(d)
 	err := h.ServeUnix("volmex", 0)
 	if err != nil {

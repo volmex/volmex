@@ -14,13 +14,13 @@ type Volume struct {
 }
 
 type Driver struct {
-	config      VolConfig
+	state       State
 	mountSource string
 }
 
-func NewDriver(config VolConfig, mountSource string) *Driver {
+func NewDriver(state State, mountSource string) *Driver {
 	return &Driver{
-		config:      config,
+		state:       state,
 		mountSource: mountSource,
 	}
 }
@@ -41,14 +41,14 @@ func (d *Driver) Create(req volume.Request) volume.Response {
 		},
 		Options: req.Options,
 	}
-	d.config.Put(v.Name, v)
+	d.state.Put(v.Name, v)
 	return volume.Response{}
 }
 
 func (d *Driver) Get(req volume.Request) volume.Response {
 	fmt.Printf("Get with %v", req)
 
-	v, err := d.config.Get(req.Name)
+	v, err := d.state.Get(req.Name)
 	if err != nil {
 		return volume.Response{
 			Err: err.Error(),
@@ -63,7 +63,7 @@ func (d *Driver) Get(req volume.Request) volume.Response {
 func (d *Driver) List(req volume.Request) volume.Response {
 	fmt.Printf("List with %v\n", req)
 	var vs []*volume.Volume
-	for _, v := range d.config.List() {
+	for _, v := range d.state.List() {
 		vs = append(vs, &v.Volume)
 	}
 	return volume.Response{
@@ -73,14 +73,14 @@ func (d *Driver) List(req volume.Request) volume.Response {
 
 func (d *Driver) Remove(req volume.Request) volume.Response {
 	fmt.Printf("Remove with %v\n", req)
-	d.config.Remove(req.Name)
+	d.state.Remove(req.Name)
 	return volume.Response{}
 }
 
 func (d *Driver) Path(req volume.Request) volume.Response {
 	fmt.Printf("Path with %v\n", req)
 
-	v, err := d.config.Get(req.Name)
+	v, err := d.state.Get(req.Name)
 	if err != nil {
 		return volume.Response{
 			Err: "no volume found",
@@ -95,7 +95,7 @@ func (d *Driver) Path(req volume.Request) volume.Response {
 func (d *Driver) Mount(req volume.MountRequest) volume.Response {
 	fmt.Printf("Mount with %v\n", req)
 
-	v, err := d.config.Get(req.Name)
+	v, err := d.state.Get(req.Name)
 	if err != nil {
 		return volume.Response{
 			Err: "no volume found",

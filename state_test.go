@@ -5,8 +5,8 @@ import (
 	"testing"
 )
 
-func TestFileStorage(t *testing.T) {
-	s := NewFileVolConfig("/tmp/test.json")
+func TestFileState(t *testing.T) {
+	s := NewFileState("/tmp/test.json")
 
 	s.Put("foo", &Volume{
 		Volume: volume.Volume{
@@ -19,7 +19,7 @@ func TestFileStorage(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ss := NewFileVolConfig("/tmp/test.json")
+	ss := NewFileState("/tmp/test.json")
 	err = ss.Load()
 	if err != nil {
 		t.Fatal(err)

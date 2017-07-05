@@ -23,9 +23,9 @@ const (
 )
 
 func TestOrdered(t *testing.T) {
-	storage := NewInMemoryVolConfig()
+	state := NewInMemoryState()
 	d := &Driver{
-		config:      storage,
+		state:       state,
 		mountSource: "/data",
 	}
 	h := volume.NewHandler(d)
