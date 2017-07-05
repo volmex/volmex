@@ -23,26 +23,26 @@ func NewInMemoryVolConfig() *InMemoryVolConfig {
 	}
 }
 
-func (s *InMemoryVolConfig) Get(name string) (*Volume, error) {
-	v := s.Data[name]
+func (c *InMemoryVolConfig) Get(name string) (*Volume, error) {
+	v := c.Data[name]
 	if v == nil {
 		return nil, errors.New("no volume found")
 	}
 	return v, nil
 }
 
-func (s *InMemoryVolConfig) Put(name string, volume *Volume) error {
-	s.Data[name] = volume
+func (c *InMemoryVolConfig) Put(name string, volume *Volume) error {
+	c.Data[name] = volume
 	return nil
 }
 
-func (s *InMemoryVolConfig) Remove(name string) error {
-	delete(s.Data, name)
+func (c *InMemoryVolConfig) Remove(name string) error {
+	delete(c.Data, name)
 	return nil
 }
 
-func (s *InMemoryVolConfig) List() (vs []*Volume) {
-	for _, v := range s.Data {
+func (c *InMemoryVolConfig) List() (vs []*Volume) {
+	for _, v := range c.Data {
 		vs = append(vs, v)
 	}
 	return vs
@@ -60,38 +60,38 @@ func NewFileVolConfig(filename string) *FileVolConfig {
 	}
 }
 
-func (s *FileVolConfig) Get(name string) (*Volume, error) {
-	return s.inMemoryVolConfig.Get(name)
+func (c *FileVolConfig) Get(name string) (*Volume, error) {
+	return c.inMemoryVolConfig.Get(name)
 }
 
-func (s *FileVolConfig) Put(name string, volume *Volume) error {
-	return s.inMemoryVolConfig.Put(name, volume)
+func (c *FileVolConfig) Put(name string, volume *Volume) error {
+	return c.inMemoryVolConfig.Put(name, volume)
 }
 
-func (s *FileVolConfig) Remove(name string) error {
-	return s.inMemoryVolConfig.Remove(name)
+func (c *FileVolConfig) Remove(name string) error {
+	return c.inMemoryVolConfig.Remove(name)
 }
 
-func (s *FileVolConfig) List() (vs []*Volume) {
-	return s.inMemoryVolConfig.List()
+func (c *FileVolConfig) List() (vs []*Volume) {
+	return c.inMemoryVolConfig.List()
 }
 
-func (s *FileVolConfig) Save() error {
-	out, err := json.Marshal(s.inMemoryVolConfig)
+func (c *FileVolConfig) Save() error {
+	out, err := json.Marshal(c.inMemoryVolConfig)
 	if err != nil {
 		return err
 	}
 
-	err = ioutil.WriteFile(s.filename, out, 0664)
+	err = ioutil.WriteFile(c.filename, out, 0664)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *FileVolConfig) Load() error {
+func (c *FileVolConfig) Load() error {
 	m := InMemoryVolConfig{}
-	in, err := ioutil.ReadFile(s.filename)
+	in, err := ioutil.ReadFile(c.filename)
 	if err != nil {
 		return err
 	}
@@ -99,6 +99,6 @@ func (s *FileVolConfig) Load() error {
 	if err != nil {
 		return err
 	}
-	s.inMemoryVolConfig = &m
+	c.inMemoryVolConfig = &m
 	return nil
 }
