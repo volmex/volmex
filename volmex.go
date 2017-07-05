@@ -6,6 +6,7 @@ import (
 	"github.com/docker/go-plugins-helpers/volume"
 	"os/exec"
 	"strings"
+	"os"
 )
 
 type Volume struct {
@@ -28,10 +29,21 @@ func NewDriver(state State, mountSource string) *Driver {
 func (d *Driver) Create(req volume.Request) volume.Response {
 	fmt.Printf("Create with %v\n", req)
 
+	err := d.state.Load()
+	if err != nil {
+		return volume.Response{
+			Err: err.Error(),
+		}
+	}
+
 	if req.Options["cmd"] == "" {
 		return volume.Response{
 			Err: "no mount command. Specify with -o cmd=acommand",
 		}
+	}
+
+	if _, err := os.Stat(d.mountSource + "/" + req.Name); os.IsNotExist(err) {
+    	os.Mkdir(d.mountSource + "/" + req.Name, 0777)
 	}
 
 	v := &Volume{
@@ -42,11 +54,26 @@ func (d *Driver) Create(req volume.Request) volume.Response {
 		Options: req.Options,
 	}
 	d.state.Put(v.Name, v)
+
+	err = d.state.Save()
+	if err != nil {
+		return volume.Response{
+			Err: err.Error(),
+		}
+	}
+
 	return volume.Response{}
 }
 
 func (d *Driver) Get(req volume.Request) volume.Response {
 	fmt.Printf("Get with %v", req)
+
+	err := d.state.Load()
+	if err != nil {
+		return volume.Response{
+			Err: err.Error(),
+		}
+	}
 
 	v, err := d.state.Get(req.Name)
 	if err != nil {
@@ -62,6 +89,14 @@ func (d *Driver) Get(req volume.Request) volume.Response {
 
 func (d *Driver) List(req volume.Request) volume.Response {
 	fmt.Printf("List with %v\n", req)
+
+	err := d.state.Load()
+	if err != nil {
+		return volume.Response{
+			Err: err.Error(),
+		}
+	}
+
 	var vs []*volume.Volume
 	for _, v := range d.state.List() {
 		vs = append(vs, &v.Volume)
@@ -73,12 +108,35 @@ func (d *Driver) List(req volume.Request) volume.Response {
 
 func (d *Driver) Remove(req volume.Request) volume.Response {
 	fmt.Printf("Remove with %v\n", req)
+
+	err := d.state.Load()
+	if err != nil {
+		return volume.Response{
+			Err: err.Error(),
+		}
+	}
+
 	d.state.Remove(req.Name)
+
+	err = d.state.Save()
+	if err != nil {
+		return volume.Response{
+			Err: err.Error(),
+		}
+	}
+
 	return volume.Response{}
 }
 
 func (d *Driver) Path(req volume.Request) volume.Response {
 	fmt.Printf("Path with %v\n", req)
+
+	err := d.state.Load()
+	if err != nil {
+		return volume.Response{
+			Err: err.Error(),
+		}
+	}
 
 	v, err := d.state.Get(req.Name)
 	if err != nil {
@@ -94,6 +152,13 @@ func (d *Driver) Path(req volume.Request) volume.Response {
 
 func (d *Driver) Mount(req volume.MountRequest) volume.Response {
 	fmt.Printf("Mount with %v\n", req)
+
+	err := d.state.Load()
+	if err != nil {
+		return volume.Response{
+			Err: err.Error(),
+		}
+	}
 
 	v, err := d.state.Get(req.Name)
 	if err != nil {
@@ -122,10 +187,26 @@ func (d *Driver) Mount(req volume.MountRequest) volume.Response {
 
 func (d *Driver) Unmount(req volume.UnmountRequest) volume.Response {
 	fmt.Printf("Unmount with %v\n", req)
+
+	err := d.state.Load()
+	if err != nil {
+		return volume.Response{
+			Err: err.Error(),
+		}
+	}
+
 	return volume.Response{Err: "no such volume"}
 }
 
 func (d *Driver) Capabilities(req volume.Request) volume.Response {
 	fmt.Printf("Capabilities with %v\n", req)
+
+	err := d.state.Load()
+	if err != nil {
+		return volume.Response{
+			Err: err.Error(),
+		}
+	}
+
 	return volume.Response{}
 }

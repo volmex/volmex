@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
+	"os"
 )
 
 type State interface {
@@ -11,6 +12,8 @@ type State interface {
 	Put(name string, volume *Volume) error
 	Remove(name string) error
 	List() []*Volume
+	Save() error
+	Load() error
 }
 
 type InMemoryState struct {
@@ -46,6 +49,14 @@ func (s *InMemoryState) List() (vs []*Volume) {
 		vs = append(vs, v)
 	}
 	return vs
+}
+
+func (s *InMemoryState) Save() error{
+	return nil
+}
+
+func (s *InMemoryState) Load() error{
+	return nil
 }
 
 type FileState struct {
@@ -93,6 +104,9 @@ func (s *FileState) Load() error {
 	m := InMemoryState{}
 	in, err := ioutil.ReadFile(s.filename)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
 		return err
 	}
 	err = json.Unmarshal(in, &m)

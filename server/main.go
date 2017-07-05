@@ -4,16 +4,22 @@ import (
 	"flag"
 	"github.com/docker/go-plugins-helpers/volume"
 	"github.com/volmex/volmex"
+	"os"
 )
 
 func main() {
-	mountSource := flag.String("storage", "/var/local/volmex", "Base for storage directories")
+	storage := flag.String("storage", "/var/local/volmex", "Base for storage directories")
 	flag.Parse()
 
-	state := volmex.NewFileState(*mountSource + "/volumes.json")
-	d := volmex.NewDriver(state, *mountSource)
+	_, err := os.Stat(*storage)
+	if os.IsNotExist(err) {
+		panic(err)
+	}
+
+	state := volmex.NewFileState(*storage + "/volumes.json")
+	d := volmex.NewDriver(state, *storage)
 	h := volume.NewHandler(d)
-	err := h.ServeUnix("volmex", 0)
+	err = h.ServeUnix("volmex", 0)
 	if err != nil {
 		panic(err)
 	}
