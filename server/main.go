@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	storage := flag.String("storage", "/var/local/volmex", "Base for storage directories")
+	storage := flag.String("storage", "/var/local/volmex", "Base for volume storage directories")
 	flag.Parse()
 
 	_, err := os.Stat(*storage)
