@@ -2,34 +2,34 @@ package main
 
 import (
 	"flag"
-	"github.com/docker/go-plugins-helpers/volume"
-	"github.com/volmex/volmex"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/docker/go-plugins-helpers/volume"
+	"github.com/volmex/volmex"
 )
 
-const pluginSockDir = "/run/docker/plugins"
-const pluginSockName = "volmex"
+const (
+	pluginSockDir  = "/run/docker/plugins"
+	pluginSockName = "volmex"
+	pluginSock     = pluginSockDir + "/" + pluginSockName + ".sock"
+)
 
 func main() {
-	storage := flag.String("storage", "/var/local/volmex", "Base for volume storage directories")
+	storage := flag.String("storage", "/var/local/volmex", "base for volume storage directories")
 	flag.Parse()
 
 	// check if volume storage base exists
 	if _, err := os.Stat(*storage); os.IsNotExist(err) {
-		panic(err)
+		log.Fatalf("storage folder does not exist: %v", err)
 	}
 
 	// check if another instance of volmex is running
-	if f, _ := os.Stat(pluginSockDir + "/" + pluginSockName + ".sock"); f != nil {
-		panic("Plugin socket exists, is volmex running already?")
+	if f, _ := os.Stat(pluginSock); f != nil {
+		log.Fatalf("%v already exits, is volmex already running?", pluginSock)
 	}
-
-	// initialize volmex volume state and the driver
-	state := volmex.NewFileState(*storage + "/volumes.json")
-	d := volmex.NewDriver(state, *storage)
-	h := volume.NewHandler(d)
 
 	// catch SIGINT / SIGTERM
 	c := make(chan os.Signal, 1)
@@ -37,9 +37,9 @@ func main() {
 	go func() {
 		for sig := range c {
 			// delete plugin socket
-			err := os.Remove(pluginSockDir + "/" + pluginSockName + ".sock")
+			err := os.Remove(pluginSock)
 			if err != nil {
-				panic(err)
+				log.Printf("could not delete plugin socket: %v", err)
 			}
 
 			// terminate accordingly to the signal
@@ -51,6 +51,11 @@ func main() {
 			}
 		}
 	}()
+
+	// initialize volmex volume state and the driver
+	state := volmex.NewFileState(*storage + "/volumes.json")
+	d := volmex.NewDriver(state, *storage)
+	h := volume.NewHandler(d)
 
 	// serve driver as docker plugin socket
 	err := h.ServeUnix(pluginSockName, 0)

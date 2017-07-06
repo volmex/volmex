@@ -3,6 +3,7 @@ package volmex
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 )
@@ -51,11 +52,11 @@ func (s *InMemoryState) List() (vs []*Volume) {
 	return vs
 }
 
-func (s *InMemoryState) Save() error{
+func (s *InMemoryState) Save() error {
 	return nil
 }
 
-func (s *InMemoryState) Load() error{
+func (s *InMemoryState) Load() error {
 	return nil
 }
 
@@ -101,13 +102,13 @@ func (s *FileState) Save() error {
 }
 
 func (s *FileState) Load() error {
+	if _, err := os.Stat(s.filename); os.IsNotExist(err) {
+		return nil
+	}
 	m := InMemoryState{}
 	in, err := ioutil.ReadFile(s.filename)
 	if err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		}
-		return err
+		return fmt.Errorf("could not load state from %v: %v", s.filename, err)
 	}
 	err = json.Unmarshal(in, &m)
 	if err != nil {
