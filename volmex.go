@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"github.com/docker/go-plugins-helpers/volume"
+	"os"
 	"os/exec"
 	"strings"
-	"os"
 )
 
 type Volume struct {
@@ -43,7 +43,7 @@ func (d *Driver) Create(req volume.Request) volume.Response {
 	}
 
 	if _, err := os.Stat(d.mountSource + "/" + req.Name); os.IsNotExist(err) {
-    	os.Mkdir(d.mountSource + "/" + req.Name, 0777)
+		os.Mkdir(d.mountSource+"/"+req.Name, 0777)
 	}
 
 	v := &Volume{
