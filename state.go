@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"sync"
 )
 
 type State interface {
@@ -19,6 +20,7 @@ type State interface {
 
 type InMemoryState struct {
 	Data map[string]*Volume
+	Mux  sync.Mutex
 }
 
 func NewInMemoryState() *InMemoryState {
@@ -28,6 +30,8 @@ func NewInMemoryState() *InMemoryState {
 }
 
 func (s *InMemoryState) Get(name string) (*Volume, error) {
+	s.Mux.Lock()
+	defer s.Mux.Unlock()
 	v := s.Data[name]
 	if v == nil {
 		return nil, errors.New("no volume found")
@@ -36,19 +40,25 @@ func (s *InMemoryState) Get(name string) (*Volume, error) {
 }
 
 func (s *InMemoryState) Put(name string, volume *Volume) error {
+	s.Mux.Lock()
 	s.Data[name] = volume
+	s.Mux.Unlock()
 	return nil
 }
 
 func (s *InMemoryState) Remove(name string) error {
+	s.Mux.Lock()
 	delete(s.Data, name)
+	s.Mux.Unlock()
 	return nil
 }
 
 func (s *InMemoryState) List() (vs []*Volume) {
+	s.Mux.Lock()
 	for _, v := range s.Data {
 		vs = append(vs, v)
 	}
+	s.Mux.Unlock()
 	return vs
 }
 
@@ -89,6 +99,8 @@ func (s *FileState) List() (vs []*Volume) {
 }
 
 func (s *FileState) Save() error {
+	s.inMemoryState.Mux.Lock()
+	defer s.inMemoryState.Mux.Unlock()
 	out, err := json.Marshal(s.inMemoryState)
 	if err != nil {
 		return err
@@ -102,6 +114,8 @@ func (s *FileState) Save() error {
 }
 
 func (s *FileState) Load() error {
+	s.inMemoryState.Mux.Lock()
+	defer s.inMemoryState.Mux.Unlock()
 	if _, err := os.Stat(s.filename); os.IsNotExist(err) {
 		return nil
 	}
