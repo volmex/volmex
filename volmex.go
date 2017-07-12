@@ -210,7 +210,7 @@ func (d *Driver) Mount(req volume.MountRequest) volume.Response {
 		}
 	}
 
-	fmt.Println("\texecuting volmex command " + v.Options["cmd"])
+	fmt.Println("\texecuting volmex command: " + v.Options["cmd"])
 
 	// prepare command
 	cmdString := strings.TrimSpace(v.Options["cmd"])
@@ -228,7 +228,7 @@ func (d *Driver) Mount(req volume.MountRequest) volume.Response {
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return volume.Response{
-			Err: err.Error(),
+			Err: "error from volmex command: " + err.Error(),
 		}
 	}
 	fmt.Println(string(out))
