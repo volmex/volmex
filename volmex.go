@@ -33,9 +33,12 @@ func NewDriver(state State, mountBase string) *Driver {
 	}
 }
 
+// the following methods implement the docker volume plugin protocol (v1)
+// https://docs.docker.com/engine/extend/plugins_volume/#volumedriver
+
 // Create is called by docker upon 'docker volume create' and creates a new volmex.Volume
 func (d *Driver) Create(req volume.Request) volume.Response {
-	fmt.Printf("Create Request for volume: %v\n", req.Name)
+	fmt.Printf("received 'Create' request for volume: %v\n", req.Name)
 
 	// load driver state
 	err := d.state.Load()
@@ -48,7 +51,7 @@ func (d *Driver) Create(req volume.Request) volume.Response {
 	// check if a command was given
 	if req.Options["cmd"] == "" {
 		return volume.Response{
-			Err: "no mount command. specify with -o cmd=\"command\"",
+			Err: "no volmex mount command. specify with -o cmd=\"command\"",
 		}
 	}
 
@@ -81,9 +84,11 @@ func (d *Driver) Create(req volume.Request) volume.Response {
 	return volume.Response{}
 }
 
+// Get returns the volume configuration for a given volume name
 func (d *Driver) Get(req volume.Request) volume.Response {
-	fmt.Printf("Get with %v", req)
+	fmt.Printf("received 'Get' request for volume: %v\n", req.Name)
 
+	// load driver state
 	err := d.state.Load()
 	if err != nil {
 		return volume.Response{
@@ -91,6 +96,7 @@ func (d *Driver) Get(req volume.Request) volume.Response {
 		}
 	}
 
+	// try to retrieve volume configuration from driver state
 	v, err := d.state.Get(req.Name)
 	if err != nil {
 		return volume.Response{
@@ -103,9 +109,11 @@ func (d *Driver) Get(req volume.Request) volume.Response {
 	}
 }
 
+// List returns all known volume configurations
 func (d *Driver) List(req volume.Request) volume.Response {
-	fmt.Printf("List with %v\n", req)
+	fmt.Printf("received 'List' request\n")
 
+	// load driver state
 	err := d.state.Load()
 	if err != nil {
 		return volume.Response{
@@ -113,18 +121,28 @@ func (d *Driver) List(req volume.Request) volume.Response {
 		}
 	}
 
+	// retrieve volume configurations from state
 	var vs []*volume.Volume
 	for _, v := range d.state.List() {
 		vs = append(vs, &v.Volume)
 	}
+
+	fmt.Printf("\t%v known volumes\n", len(vs))
+	for _, v := range vs {
+		fmt.Printf("\t\t%v\n", v.Name)
+	}
+
 	return volume.Response{
 		Volumes: vs,
 	}
 }
 
+// Remove is issued by docker when a user requests to delete a volume
+// however, we don't actually remove any files or the storage folder
 func (d *Driver) Remove(req volume.Request) volume.Response {
-	fmt.Printf("Remove with %v\n", req)
+	fmt.Printf("received 'Remove' request for volume: %v\n", req.Name)
 
+	// load driver state
 	err := d.state.Load()
 	if err != nil {
 		return volume.Response{
@@ -132,8 +150,10 @@ func (d *Driver) Remove(req volume.Request) volume.Response {
 		}
 	}
 
+	// remove volume from state
 	d.state.Remove(req.Name)
 
+	// save driver state
 	err = d.state.Save()
 	if err != nil {
 		return volume.Response{
@@ -144,9 +164,11 @@ func (d *Driver) Remove(req volume.Request) volume.Response {
 	return volume.Response{}
 }
 
+// Path returns the mountpoint for a given volume name
 func (d *Driver) Path(req volume.Request) volume.Response {
-	fmt.Printf("Path with %v\n", req)
+	fmt.Printf("received 'Path' request for volume: %v\n", req.Name)
 
+	// load driver state
 	err := d.state.Load()
 	if err != nil {
 		return volume.Response{
@@ -154,10 +176,11 @@ func (d *Driver) Path(req volume.Request) volume.Response {
 		}
 	}
 
+	// try to retrieve volume configuration from driver state
 	v, err := d.state.Get(req.Name)
 	if err != nil {
 		return volume.Response{
-			Err: "no volume found",
+			Err: "volume unknown",
 		}
 	}
 
@@ -166,9 +189,12 @@ func (d *Driver) Path(req volume.Request) volume.Response {
 	}
 }
 
+// Mount is called by docker before a container using a volmex volume is started
+// since we don't actually do anything related to storage, we only execute the specified volmex command and return the mountpoint
 func (d *Driver) Mount(req volume.MountRequest) volume.Response {
-	fmt.Printf("Mount with %v\n", req)
+	fmt.Printf("received 'Mount' request for volume: %v\n", req.Name)
 
+	// load driver state
 	err := d.state.Load()
 	if err != nil {
 		return volume.Response{
@@ -176,24 +202,35 @@ func (d *Driver) Mount(req volume.MountRequest) volume.Response {
 		}
 	}
 
+	// try to retrieve volume configuration from driver state
 	v, err := d.state.Get(req.Name)
 	if err != nil {
 		return volume.Response{
-			Err: "no volume found",
+			Err: "volume unknown",
 		}
 	}
 
-	fmt.Println("executing " + v.Options["cmd"])
-	components := strings.Split(v.Options["cmd"], " ")
-	cmd := exec.Command(components[0], components[1:]...)
-	cmd.Env = []string{"MOUNT_SOURCE=" + v.Mountpoint}
+	fmt.Println("\texecuting volmex command " + v.Options["cmd"])
+
+	// prepare command
+	cmdString := strings.TrimSpace(v.Options["cmd"])
+	cmdParts := strings.Split(cmdString, " ")
+	cmd := exec.Command(cmdParts[0], cmdParts[1:]...)
+
+	// set volmex environment for the new command
+	cmd.Env = []string{
+		"VOLMEX_NAME=" + v.Name,
+		"VOLMEX_MOUNTPOINT=" + v.Mountpoint,
+		"VOLMEX_CMD=" + cmdString,
+	}
+
+	// execute command and print output
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return volume.Response{
 			Err: err.Error(),
 		}
 	}
-
 	fmt.Println(string(out))
 
 	return volume.Response{
@@ -201,28 +238,16 @@ func (d *Driver) Mount(req volume.MountRequest) volume.Response {
 	}
 }
 
+// Unmount is called by docker after a container using a volmex volume was stopped
+// Currently we don't want to execute a command after a container was stopped, so we don't need to do anything here
 func (d *Driver) Unmount(req volume.UnmountRequest) volume.Response {
-	fmt.Printf("Unmount with %v\n", req)
-
-	err := d.state.Load()
-	if err != nil {
-		return volume.Response{
-			Err: err.Error(),
-		}
-	}
-
-	return volume.Response{Err: "no such volume"}
+	fmt.Printf("received 'Unmount' request for volume: %v\n", req.Name)
+	return volume.Response{}
 }
 
+// Capabilities is called by docker to get certain driver options (atm only the 'scope')
 func (d *Driver) Capabilities(req volume.Request) volume.Response {
-	fmt.Printf("Capabilities with %v\n", req)
-
-	err := d.state.Load()
-	if err != nil {
-		return volume.Response{
-			Err: err.Error(),
-		}
-	}
-
-	return volume.Response{}
+	fmt.Printf("received 'Capabilities' request for volume: %v\n", req.Name)
+	localCap := volume.Capability{Scope: "local"}
+	return volume.Response{Capabilities: localCap}
 }

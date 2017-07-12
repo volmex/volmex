@@ -22,15 +22,15 @@ const (
 	capabilitiesPath = "/VolumeDriver.Capabilities"
 )
 
-func TestOrdered(t *testing.T) {
+func TestVolmex(t *testing.T) {
 	state := NewInMemoryState()
 	d := &Driver{
 		state:     state,
-		mountBase: "/data",
+		mountBase: "/var/local/volmex",
 	}
 	h := volume.NewHandler(d)
 
-	l := sockets.NewInmemSocket("test", 0)
+	l := sockets.NewInmemSocket("", 0)
 	go h.Serve(l)
 	defer l.Close()
 
@@ -38,17 +38,8 @@ func TestOrdered(t *testing.T) {
 		Dial: l.Dial,
 	}}
 
-	// Create missing command
-	resp, err := driverRequest(client, createPath, volume.Request{Name: "foo"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if resp.Err == "" {
-		t.Fatal("create without cmd worked")
-	}
-
-	// Create
-	resp, err = driverRequest(client, createPath, volume.Request{Name: "foo", Options: map[string]string{"cmd": "foo"}})
+	// Test Create
+	resp, err := driverRequest(client, createPath, volume.Request{Name: "foo", Options: map[string]string{"cmd": "foo"}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -56,7 +47,16 @@ func TestOrdered(t *testing.T) {
 		t.Fatal(resp.Err)
 	}
 
-	// Get
+	// Test Create with missing command
+	resp, err = driverRequest(client, createPath, volume.Request{Name: "bar"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.Err == "" {
+		t.Fatal("Create without cmd worked")
+	}
+
+	// Test Get
 	resp, err = driverRequest(client, getPath, volume.Request{Name: "foo"})
 	if err != nil {
 		t.Fatal(err)
@@ -64,12 +64,12 @@ func TestOrdered(t *testing.T) {
 	if resp.Err != "" {
 		t.Fatal(resp.Err)
 	}
-	if resp.Volume.Mountpoint != "/data/foo" {
-		t.Fatalf("Mountpoint was wrong %v", resp.Volume.Mountpoint)
+	if resp.Volume.Mountpoint != "/var/local/volmex/foo" {
+		t.Fatalf("resp.Volume.Mountpoint was wrong %v", resp.Volume.Mountpoint)
 	}
 
-	// List
-	resp, err = driverRequest(client, listPath, volume.Request{Name: "foo"})
+	// Test List
+	resp, err = driverRequest(client, listPath, volume.Request{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -80,7 +80,7 @@ func TestOrdered(t *testing.T) {
 		t.Fatalf("List did not contain volume %v", resp.Volumes)
 	}
 
-	// Path
+	// Test Path
 	resp, err = driverRequest(client, hostVirtualPath, volume.Request{Name: "foo"})
 	if err != nil {
 		t.Fatal(err)
@@ -88,11 +88,11 @@ func TestOrdered(t *testing.T) {
 	if resp.Err != "" {
 		t.Fatal(resp.Err)
 	}
-	if resp.Mountpoint != "/data/foo" {
-		t.Fatalf("Mountpoint was %v", resp.Mountpoint)
+	if resp.Mountpoint != "/var/local/volmex/foo" {
+		t.Fatalf("resp.Mountpoint was not %v", resp.Mountpoint)
 	}
 
-	// Remove + Get
+	// Test Remove
 	resp, err = driverRequest(client, removePath, volume.Request{Name: "foo"})
 	if err != nil {
 		t.Fatal(err)
@@ -100,23 +100,24 @@ func TestOrdered(t *testing.T) {
 	if resp.Err != "" {
 		t.Fatal(resp.Err)
 	}
-	// Get
+
+	// Test removed Get
 	resp, err = driverRequest(client, getPath, volume.Request{Name: "foo"})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if resp.Err == "" {
-		t.Fatal("volume not deleted")
+		t.Fatal("volume was not deleted")
 	}
 }
 
 // Initiates a new request to the driver
-func driverRequest(client *http.Client, method string, req volume.Request) (*volume.Response, error) {
+func driverRequest(client *http.Client, path string, req volume.Request) (*volume.Response, error) {
 	b, err := json.Marshal(req)
 	if err != nil {
 		return nil, err
 	}
-	resp, err := client.Post("http://localhost"+method, "application/json", bytes.NewReader(b))
+	resp, err := client.Post("http://localhost"+path, "application/json", bytes.NewReader(b))
 	if err != nil {
 		return nil, err
 	}
@@ -125,6 +126,5 @@ func driverRequest(client *http.Client, method string, req volume.Request) (*vol
 	if err != nil {
 		return nil, err
 	}
-
 	return &vResp, nil
 }
