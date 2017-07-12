@@ -1,0 +1,12 @@
+[Unit]
+Description=Volmex Daemon
+Before=docker.service
+After=network.target
+
+[Service]
+ExecStart=/usr/lib/docker/volmex-server
+
+[Install]
+WantedBy=multi-user.target
+RequiredBy=docker.service
+
