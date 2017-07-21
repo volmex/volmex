@@ -4,7 +4,7 @@ Before=docker.service
 After=network.target
 
 [Service]
-ExecStart=/usr/lib/docker/volmex-server
+ExecStart=/usr/lib/docker/volmex-daemon
 
 [Install]
 WantedBy=multi-user.target
