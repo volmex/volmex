@@ -117,7 +117,7 @@ func (s *FileState) List() (vs []*Volume) {
 func (s *FileState) Save() error {
 	s.inMemoryState.Mux.Lock()
 	defer s.inMemoryState.Mux.Unlock()
-	out, err := json.Marshal(s.inMemoryState)
+	out, err := json.Marshal(s.inMemoryState.Data)
 	if err != nil {
 		return err
 	}
@@ -135,15 +135,15 @@ func (s *FileState) Load() error {
 	if _, err := os.Stat(s.filename); os.IsNotExist(err) {
 		return nil
 	}
-	m := InMemoryState{}
+	d := make(map[string]*Volume, 0)
 	in, err := ioutil.ReadFile(s.filename)
 	if err != nil {
 		return fmt.Errorf("could not parse state from %v: %v", s.filename, err)
 	}
-	err = json.Unmarshal(in, &m)
+	err = json.Unmarshal(in, &d)
 	if err != nil {
 		return err
 	}
-	s.inMemoryState = &m
+	s.inMemoryState.Data = d
 	return nil
 }
