@@ -1,6 +1,6 @@
 .PHONY: build deps test run bundle
 
-build: deps
+build: test
 	cd daemon; go build -v
 
 deps:
