@@ -3,6 +3,7 @@ package volmex
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"net/http"
 	"testing"
 
@@ -39,92 +40,116 @@ func TestVolmex(t *testing.T) {
 	}}
 
 	// Test Create
-	resp, err := driverRequest(client, createPath, volume.Request{Name: "foo", Options: map[string]string{"cmd": "foo"}})
+	resp, err := driverRequest(client, createPath, volume.CreateRequest{Name: "foo", Options: map[string]string{"cmd": "foo"}})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if resp.Err != "" {
-		t.Fatal(resp.Err)
+	var errResp *volume.ErrorResponse
+	if err := json.NewDecoder(resp).Decode(&errResp); err != nil {
+		t.Fatal(err)
+	}
+	if errResp.Err != "" {
+		t.Fatal(err)
 	}
 
-	// Test Create with missing command
-	resp, err = driverRequest(client, createPath, volume.Request{Name: "bar"})
+	// Should not create with missing opts: cmd
+	resp, err = driverRequest(client, createPath, volume.CreateRequest{Name: "bar"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if resp.Err == "" {
-		t.Fatal("Create without cmd worked")
+	if err = json.NewDecoder(resp).Decode(&errResp); err != nil {
+		t.Fatal(err)
+	}
+	if errResp.Err != NoMountCommandErr.Error() {
+		t.Fatal(errResp.Err)
 	}
 
 	// Test Get
-	resp, err = driverRequest(client, getPath, volume.Request{Name: "foo"})
+	resp, err = driverRequest(client, getPath, volume.GetRequest{Name: "foo"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if resp.Err != "" {
-		t.Fatal(resp.Err)
+	var getResp *volume.GetResponse
+	if err := json.NewDecoder(resp).Decode(&getResp); err != nil {
+		t.Fatal(err)
 	}
-	if resp.Volume.Mountpoint != "/var/local/volmex/foo" {
-		t.Fatalf("resp.Volume.Mountpoint was wrong %v", resp.Volume.Mountpoint)
+	if getResp.Err != "" {
+		t.Fatal(err)
+	}
+	if getResp.Volume.Mountpoint != "/var/local/volmex/foo" {
+		t.Fatalf("resp.Volume.Mountpoint was wrong %v", getResp.Volume.Mountpoint)
 	}
 
 	// Test List
-	resp, err = driverRequest(client, listPath, volume.Request{})
+	resp, err = driverRequest(client, listPath, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if resp.Err != "" {
-		t.Fatal(resp.Err)
+	var listResp *volume.ListResponse
+	if err := json.NewDecoder(resp).Decode(&listResp); err != nil {
+		t.Fatal(err)
 	}
-	if resp.Volumes[0].Name != "foo" {
-		t.Fatalf("List did not contain volume %v", resp.Volumes)
+	if listResp.Err != "" {
+		t.Fatal(err)
+	}
+	if listResp.Volumes[0].Name != "foo" {
+		t.Fatalf("List did not contain volume %v", listResp.Volumes)
 	}
 
 	// Test Path
-	resp, err = driverRequest(client, hostVirtualPath, volume.Request{Name: "foo"})
+	resp, err = driverRequest(client, hostVirtualPath, volume.PathRequest{Name: "foo"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if resp.Err != "" {
-		t.Fatal(resp.Err)
+	var pathResp *volume.PathResponse
+	if err := json.NewDecoder(resp).Decode(&pathResp); err != nil {
+		t.Fatal(err)
 	}
-	if resp.Mountpoint != "/var/local/volmex/foo" {
-		t.Fatalf("resp.Mountpoint was not %v", resp.Mountpoint)
+	if pathResp.Err != "" {
+		t.Fatal(err)
+	}
+	if pathResp.Mountpoint != "/var/local/volmex/foo" {
+		t.Fatalf("resp.Mountpoint was not %v", pathResp.Mountpoint)
 	}
 
 	// Test Remove
-	resp, err = driverRequest(client, removePath, volume.Request{Name: "foo"})
+	resp, err = driverRequest(client, removePath, volume.RemoveRequest{Name: "foo"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if resp.Err != "" {
-		t.Fatal(resp.Err)
+	if err := json.NewDecoder(resp).Decode(&errResp); err != nil {
+		t.Fatal(err)
+	}
+	if errResp.Err != "" {
+		t.Fatal(err)
 	}
 
-	// Test removed Get
-	resp, err = driverRequest(client, getPath, volume.Request{Name: "foo"})
+	// Get removed volume should fail
+	resp, err = driverRequest(client, getPath, volume.GetRequest{Name: "foo"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if resp.Err == "" {
-		t.Fatal("volume was not deleted")
+	if err := json.NewDecoder(resp).Decode(&getResp); err != nil {
+		t.Fatal(err)
+	}
+	if getResp.Err == "" {
+		t.Fatal(getResp.Err)
 	}
 }
 
-// Initiates a new request to the driver
-func driverRequest(client *http.Client, path string, req volume.Request) (*volume.Response, error) {
+// initiates a new request to the driver
+func driverRequest(client *http.Client, method string, req interface{}) (io.Reader, error) {
 	b, err := json.Marshal(req)
 	if err != nil {
 		return nil, err
 	}
-	resp, err := client.Post("http://localhost"+path, "application/json", bytes.NewReader(b))
+	if req == nil {
+		b = []byte{}
+	}
+	resp, err := client.Post("http://localhost"+method, "application/json", bytes.NewReader(b))
 	if err != nil {
 		return nil, err
 	}
-	var vResp volume.Response
-	err = json.NewDecoder(resp.Body).Decode(&vResp)
-	if err != nil {
-		return nil, err
-	}
-	return &vResp, nil
+
+	return resp.Body, nil
 }
