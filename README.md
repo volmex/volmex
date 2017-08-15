@@ -7,8 +7,7 @@ Volmex is a docker volume driver that allows to execute arbitrary commands befor
 ## Context
 Using a swarm cluster, we found that there is no satisfying solution to setup and use multi-host persistent volumes.
 
-As there are numerous protocols and implementations for multi-host storage solutions, e.g. `rsync`, [syncthing](https://syncthing.net/), ...
-, we decided to not implement a new protocol but strive for a more abstract solution.
+As there are numerous protocols and implementations for multi-host storage solutions, e.g. `rsync`, [syncthing](https://syncthing.net/), ... we decided to not implement a new protocol but strive for a more abstract solution.
 
 Hence, we created a Docker volume plugin (v1) that simply executes a user defined command whenever a volume is mounted.
 
