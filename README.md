@@ -10,34 +10,35 @@ Using a swarm cluster, we found that there is no satisfying solution to setup an
 As there are numerous protocols and implementations for multi-host storage solutions, e.g. `rsync`, [syncthing](https://syncthing.net/), ...
 , we decided to not implement a new protocol but strive for a more abstract solution.
 
-Hence, we created a Docker v1 volume plugin that simply executes a user defined command whenever a volume is mounted.
+Hence, we created a Docker volume plugin (v1) that simply executes a user defined command whenever a volume is mounted.
 
-## Usage
+## General
+Besides the 'pre-mount hook', volmex volumes are equivalent to named volumes in Docker (With a different storage base directory though - `/var/local/volmex`)
+
+
+## Usage (Evaluation/Testing)
+
 ```
-# create dir where local volumes are synced to
+# create dir where local volumes are stored
 $ sudo mkdir /var/local/volmex
 
-# start volmex driver server (later you can move this to a systemd unit file)
+# start volmex driver (later you can move this to a systemd service file)
 $ sudo ./daemon
 
-# create a volume using the volmex driver and specify a command or shell script
+# create a volume 'foo' using the volmex driver and specify a command or shell script that shall be executed pre-mount
 $ docker volume create \
   --driver volmex \
-  --opt cmd="/usr/local/sbin/mount-someting" \
+  --opt cmd="/usr/local/sbin/do-something" \
   foo
-
-# check volume
-$ docker volume ls
-volmex      foo
 ```
 
-When the command is executed, the following environment variables are available:
+When the command is executed, the following environment variables are available in the command's environment:
 
 + `VOLMEX_NAME` = foo 
 + `VOLMEX_MOUNTPOINT` = /var/local/volmex/foo 
-+ `VOLMEX_CMD` = /usr/local/sbin/mount-something
++ `VOLMEX_CMD` = /usr/local/sbin/do-something
 
-## Install
+## Install (Persistent)
 + Download and extract volmex
 
 ```
@@ -64,4 +65,3 @@ When the command is executed, the following environment variables are available:
 # systemctl restart docker
 # systemctl status volmex
 ```
-
