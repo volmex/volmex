@@ -38,4 +38,30 @@ When the command is executed, the following environment variables are available:
 + `VOLMEX_CMD` = /usr/local/sbin/mount-something
 
 ## Install
-TODO
++ Download and extract volmex
+
+```
+# cd /tmp
+# wget https://github.com/volmex/volmex/releases/download/v0.9/volmex-0.9.tar
+# tar xf volmex-0.9.tar
+
+```
+
++ Install volmex
+
+```
+# mkdir -p /usr/lib/docker
+# install -D -m 744 volmex-daemon /usr/lib/docker/volmex-daemon
+# install -D -m 644 volmex.service /etc/systemd/system/volmex.service
+# mkdir -p /var/local/volmex
+# systemctl daemon-reload
+```
+
++ Start/enable volmex
+
+```
+# systemctl enable volmex
+# systemctl restart docker
+# systemctl status volmex
+```
+
