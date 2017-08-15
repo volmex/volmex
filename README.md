@@ -69,6 +69,6 @@ When the command is executed, the following variables are available in the comma
 # systemctl status volmex
 ```
 
-+ Volmex should be started before Docker - which is configured in the service file. That's why is sufficient to `systemctl restart docker`.
++ Volmex should be started before Docker - which is configured in the service file. That's why it's sufficient to `systemctl restart docker`.
 
 ## Demo
