@@ -35,13 +35,13 @@ $ docker volume create \
   foo
 ```
 
-When the command is executed, the following environment variables are available in the command's environment:
+When the command is executed, the following variables are available in the command's environment:
 
 + `VOLMEX_NAME` = foo 
 + `VOLMEX_MOUNTPOINT` = /var/local/volmex/foo 
 + `VOLMEX_CMD` = /usr/local/sbin/do-something
 
-## Install (Persistent)
+## Install on systemd systems (Persistent)
 + Download and extract volmex
 
 ```
@@ -68,3 +68,7 @@ When the command is executed, the following environment variables are available 
 # systemctl restart docker
 # systemctl status volmex
 ```
+
++ Volmex should be started before Docker - which is configured in the service file. That's why is sufficient to `systemctl restart docker`.
+
+## Demo
