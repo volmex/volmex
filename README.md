@@ -18,11 +18,15 @@ Besides the 'pre-mount hook', volmex volumes are equivalent to named volumes in 
 ## Usage (Evaluation/Testing)
 
 ```
+# get volmex
+$ wget https://github.com/volmex/volmex/releases/download/v0.9/volmex-0.9.tar
+$ tar xf volmex-0.9.tar
+
 # create dir where local volumes are stored
 $ sudo mkdir /var/local/volmex
 
 # start volmex driver (later you can move this to a systemd service file)
-$ sudo ./daemon
+$ sudo ./volmex-daemon
 
 # create a volume 'foo' using the volmex driver and specify a command or shell script that shall be executed pre-mount
 $ docker volume create \
