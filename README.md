@@ -66,9 +66,64 @@ When the command is executed, the following variables are available in the comma
 ```
 # systemctl enable volmex
 # systemctl restart docker
-# systemctl status volmex
 ```
 
 + Volmex should be started before Docker - which is configured in the service file. That's why it's sufficient to `systemctl restart docker`.
 
-## Demo
+## Usage Example
+
+- Create script that shall be executed on volume mount:
+
+```
+➜  ~ sudo vim /usr/local/sbin/do-something
+...
+#!/usr/bin/env bash
+echo $VOLMEX_NAME
+echo sleeping for 10 seconds...
+sleep 10
+echo done
+...
+➜  ~ sudo chmod +x /usr/local/sbin/do-something
+
+```
+
+- Create the volume using the volmex driver
+
+```
+➜  ~ docker volume create --driver volmex --opt cmd="/usr/local/sbin/do-something" foo
+```
+
+- Add content
+
+```
+➜  ~ sudo mkdir -p /var/local/volmex/foo
+➜  ~ sudo vim /var/local/volmex/foo/volmex-test
+...
+volmex-test
+...
+```
+
+- Create a container which uses the volume
+
+```
+➜  ~ docker run --rm -ti --volume foo:/foo alpine sh
+/ # cat /foo/volmex-test
+volmex-test
+/ # exit
+```
+
+- Check log output of the executed command
+
+```
+➜  ~ journalctl -u volmex | tail
+...
+volmex-daemon[2115]: received 'Get' request for volume: foo
+volmex-daemon[2115]: received 'Mount' request for volume: foo
+volmex-daemon[2115]:         executing volmex command: /usr/local/sbin/do-something
+volmex-daemon[2115]: foo
+volmex-daemon[2115]: sleeping for 10 seconds...
+volmex-daemon[2115]: done
+volmex-daemon[2115]: received 'Unmount' request for volume: foo
+...
+```
+
