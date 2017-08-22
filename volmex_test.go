@@ -73,9 +73,6 @@ func TestVolmex(t *testing.T) {
 	if err := json.NewDecoder(resp).Decode(&getResp); err != nil {
 		t.Fatal(err)
 	}
-	if getResp.Err != "" {
-		t.Fatal(err)
-	}
 	if getResp.Volume.Mountpoint != "/var/local/volmex/foo" {
 		t.Fatalf("resp.Volume.Mountpoint was wrong %v", getResp.Volume.Mountpoint)
 	}
@@ -87,9 +84,6 @@ func TestVolmex(t *testing.T) {
 	}
 	var listResp *volume.ListResponse
 	if err := json.NewDecoder(resp).Decode(&listResp); err != nil {
-		t.Fatal(err)
-	}
-	if listResp.Err != "" {
 		t.Fatal(err)
 	}
 	if listResp.Volumes[0].Name != "foo" {
@@ -105,9 +99,6 @@ func TestVolmex(t *testing.T) {
 	if err := json.NewDecoder(resp).Decode(&pathResp); err != nil {
 		t.Fatal(err)
 	}
-	if pathResp.Err != "" {
-		t.Fatal(err)
-	}
 	if pathResp.Mountpoint != "/var/local/volmex/foo" {
 		t.Fatalf("resp.Mountpoint was not %v", pathResp.Mountpoint)
 	}
@@ -120,9 +111,6 @@ func TestVolmex(t *testing.T) {
 	if err := json.NewDecoder(resp).Decode(&errResp); err != nil {
 		t.Fatal(err)
 	}
-	if errResp.Err != "" {
-		t.Fatal(err)
-	}
 
 	// Get removed volume should fail
 	resp, err = driverRequest(client, getPath, volume.GetRequest{Name: "foo"})
@@ -131,9 +119,6 @@ func TestVolmex(t *testing.T) {
 	}
 	if err := json.NewDecoder(resp).Decode(&getResp); err != nil {
 		t.Fatal(err)
-	}
-	if getResp.Err == "" {
-		t.Fatal(getResp.Err)
 	}
 }
 
