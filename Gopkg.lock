@@ -21,7 +21,7 @@
 [[projects]]
   name = "github.com/docker/go-plugins-helpers"
   packages = ["sdk","volume"]
-  revision = "7c98cbeab2109b3ecbdf36516e38798c855bf88f"
+  revision = "a9ef19c479cb60e751efa55f7f2b265776af1abf"
 
 [[projects]]
   branch = "master"
@@ -38,6 +38,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d7249b5e92137cca3687a08f42c6a9fb11a1cd755f7c8f76edee2fc456c242e1"
+  inputs-digest = "3f9523e3e7977591c623ec0edfb39cd89870467e27a03e8bb0f9bb405b628c8a"
   solver-name = "gps-cdcl"
   solver-version = 1

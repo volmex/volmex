@@ -1,31 +1,8 @@
-
-# Gopkg.toml example
-#
-# Refer to https://github.com/golang/dep/blob/master/docs/Gopkg.toml.md
-# for detailed Gopkg.toml documentation.
-#
-# required = ["github.com/user/thing/cmd/thing"]
-# ignored = ["github.com/user/project/pkgX", "bitbucket.org/user/project/pkgA/pkgY"]
-#
-# [[constraint]]
-#   name = "github.com/user/project"
-#   version = "1.0.0"
-#
-# [[constraint]]
-#   name = "github.com/user/project2"
-#   branch = "dev"
-#   source = "github.com/myfork/project2"
-#
-# [[override]]
-#  name = "github.com/x/y"
-#  version = "2.4.0"
-
-
 [[constraint]]
   name = "github.com/docker/go-connections"
   revision = "3ede32e2033de7505e6500d6c868c2b9ed9f169d"
 
 [[constraint]]
   name = "github.com/docker/go-plugins-helpers"
-  revision = "7c98cbeab2109b3ecbdf36516e38798c855bf88f"
+  revision = "a9ef19c479cb60e751efa55f7f2b265776af1abf"
 
