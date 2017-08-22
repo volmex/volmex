@@ -4,7 +4,7 @@ build: test
 	cd daemon; go build -v
 
 deps:
-	go get -v -t
+	dep ensure
 
 test: deps
 	go test -v
