@@ -2,8 +2,6 @@
 
 Volmex is a docker volume driver that allows to execute arbitrary commands before a volume is mounted (pre-mount hook).
 
-[![Build Status](https://travis-ci.org/volmex/volmex.svg?branch=master)](https://travis-ci.org/volmex/volmex)
-
 ## Context
 Using a swarm cluster, we found that there is no satisfying solution to setup and use multi-host persistent volumes.
 
