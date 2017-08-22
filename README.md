@@ -18,7 +18,7 @@ Besides the 'pre-mount hook', volmex volumes are equivalent to named volumes in 
 ```
 # get volmex
 $ wget https://github.com/volmex/volmex/releases/download/v0.9/volmex-0.9.tar
-$ tar xf volmex-0.9.tar
+$ tar xf volmex-0.9.1.tar
 
 # create dir where local volumes are stored
 $ sudo mkdir /var/local/volmex
@@ -45,7 +45,7 @@ When the command is executed, the following variables are available in the comma
 ```
 # cd /tmp
 # wget https://github.com/volmex/volmex/releases/download/v0.9/volmex-0.9.tar
-# tar xf volmex-0.9.tar
+# tar xf volmex-0.9.1.tar
 
 ```
 
@@ -68,7 +68,7 @@ When the command is executed, the following variables are available in the comma
 
 + Volmex should be started before Docker - which is configured in the service file. That's why it's sufficient to `systemctl restart docker`.
 
-## Usage Example
+## Usage
 
 - Create script that shall be executed on volume mount:
 
