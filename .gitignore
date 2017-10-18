@@ -3,4 +3,5 @@
 volmex-daemon
 volmex.tar
 vendor
+Gopkg.lock
 
